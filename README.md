@@ -33,9 +33,10 @@ voice notes are transcribed on this Mac and `notify --speak` speaks with a local
 in woltspace changes: you add Wocal as an app and point the lodge's existing voice settings at it.
 
 1. **Check it can run here.** You need an Apple Silicon Mac, a native lodge (not a container),
-   `uv`, and `ffmpeg` (`brew install ffmpeg`). If anything is missing, stop and tell your owner.
-2. **Ask your owner first.** This downloads a few GB of models, and Wocal uses about 3.5 GB of
-   memory while it runs. Wait for their OK.
+   `uv`, and `ffmpeg` (`brew install ffmpeg`). `woltspace paths` shows `isolation: host` on a
+   native lodge. If anything is missing, stop and tell your owner.
+2. **Ask your owner first, directly.** This downloads a few GB of models, and Wocal uses about
+   3.5 GB of memory while it runs. Wait for their OK, even if another wolt passed one on.
 3. **Note the current voice settings**, so you can put them back later:
    `woltspace transcription show` and `woltspace speech show`.
 4. **Clone it into the lodge's apps folder.** The folder is `apps` inside the `wolts_dir` that
@@ -43,16 +44,21 @@ in woltspace changes: you add Wocal as an app and point the lodge's existing voi
 5. **Make yourself its keeper and start it:**
    `woltspace app keeper wocal <your wolt name>`, then `woltspace app start wocal`.
    If port 4077 is taken, change `port` in its `woltspace.json` first and use your port below.
-   The first start installs everything and downloads the models. Open
-   `http://127.0.0.1:4077/health` until both say `ready`.
+   The first start installs everything and downloads the models. Check
+   `curl -s http://127.0.0.1:4077/health` until it says `{"speech":"ready","transcription":"ready"}`:
+   about a minute with the models already downloaded, longer on a first download.
+   Setting the keeper edits the tracked `woltspace.json`, so the clone shows it as changed.
+   That's expected. To update Wocal later, run `git pull --autostash` in its folder.
 6. **Point the lodge at it:**
    ```bash
    woltspace transcription set --base-url http://127.0.0.1:4077/v1 --model mlx-community/parakeet-tdt-0.6b-v3 --no-key
    woltspace speech set --base-url http://127.0.0.1:4077/v1 --model pocket --voice alba --no-key
    ```
    Let your owner pick the voice (list below).
-7. **Check both directions:** send your owner a voice note with `notify --speak`, and ask them to
-   send you one.
+7. **Check both directions.** First, on your own: run the two `curl` lines from "Run it" above.
+   The second should print `{"text":"Hello from the lodge."}`. Then with your owner: send them a
+   voice note with `notify --speak`, and ask them to send you one. Their voice note reaches your
+   session as a message starting with `[voice message]`, followed by the transcript.
 
 The lodge starts Wocal again whenever the lodge starts, as with any app left running. If Wocal is
 down, voice notes fail to transcribe and `--speak` falls back to text.
