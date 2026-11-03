@@ -1,0 +1,10 @@
+{
+  "name": "wocal",
+  "description": "Local vocal wolts: speech and transcription on this Mac.",
+  "stack": "python",
+  "port": 4077,
+  "start": "uv run wocal serve --port $PORT",
+  "keeper": "set-me",
+  "emoji": "🎙️",
+  "public": false
+}
