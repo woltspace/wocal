@@ -26,35 +26,45 @@ curl http://127.0.0.1:4077/v1/audio/transcriptions -F file=@hello.mp3
 The first run downloads both models, a few GB. Open `http://127.0.0.1:4077/` to see when they
 are ready; a request made before then waits.
 
-## Add it to your lodge
+## For wolts: add Wocal to your lodge
 
-Tell a wolt: "Add Wocal to the lodge, from https://github.com/woltspace/wocal". Or run this from a
-wolt's session:
+You are a wolt, and your owner asked you to give the lodge local voice with Wocal. When you're done,
+voice notes are transcribed on this Mac and `notify --speak` speaks with a local voice. Nothing
+in woltspace changes: you add Wocal as an app and point the lodge's existing voice settings at it.
 
-```bash
-LODGE="$(woltspace paths | sed -n 's/^endpoint: //p')"
-APPS="$(woltspace paths | sed -n 's/^wolts_dir: //p')/apps"
-git clone https://github.com/woltspace/wocal "$APPS/wocal"
-cd "$APPS/wocal" && uv sync
-curl -X PUT "$LODGE/apps/wocal" -H 'content-type: application/json' -d "{\"keeper\":\"$WOLT_NAME\"}"
-curl -X POST "$LODGE/apps/wocal/start"
-uv run wocal connect
-```
+1. **Check it can run here.** You need an Apple Silicon Mac, a native lodge (not a container),
+   `uv`, and `ffmpeg` (`brew install ffmpeg`). If anything is missing, stop and tell your owner.
+2. **Ask your owner first.** This downloads a few GB of models, and Wocal uses about 3.5 GB of
+   memory while it runs. Wait for their OK.
+3. **Note the current voice settings**, so you can put them back later:
+   `woltspace transcription show` and `woltspace speech show`.
+4. **Clone it into the lodge's apps folder.** The folder is `apps` inside the `wolts_dir` that
+   `woltspace paths` prints. Clone this repo there as `wocal`.
+5. **Make yourself its keeper and start it:**
+   `woltspace app keeper wocal <your wolt name>`, then `woltspace app start wocal`.
+   If port 4077 is taken, change `port` in its `woltspace.json` first and use your port below.
+   The first start installs everything and downloads the models. Open
+   `http://127.0.0.1:4077/health` until both say `ready`.
+6. **Point the lodge at it:**
+   ```bash
+   woltspace transcription set --base-url http://127.0.0.1:4077/v1 --model mlx-community/parakeet-tdt-0.6b-v3 --no-key
+   woltspace speech set --base-url http://127.0.0.1:4077/v1 --model pocket --voice alba --no-key
+   ```
+   Let your owner pick the voice (list below).
+7. **Check both directions:** send your owner a voice note with `notify --speak`, and ask them to
+   send you one.
 
-Then send your wolt a voice note and ask it to answer with `notify --speak`. If port 4077 is taken,
-change `port` in `woltspace.json`, then use `wocal connect --port <port>`.
+The lodge starts Wocal again whenever the lodge starts, as with any app left running. If Wocal is
+down, voice notes fail to transcribe and `--speak` falls back to text.
 
-The lodge starts Wocal again whenever the lodge itself starts, as with any app you left running.
-If Wocal is down, voice notes fail to transcribe and `--speak` falls back to text.
-
-To undo it: `uv run wocal disconnect` puts the lodge back on its default speech and transcription
-service, then stop the app from the lodge.
+To undo it: set transcription and speech back to what step 3 showed (or run
+`woltspace transcription clear` and `woltspace speech clear` for the defaults), then
+`woltspace app stop wocal`.
 
 ## Good to know
 
 - Voices: alba, marius, javert, jean, cosette, fantine, eponine, azelma, anna, vera, charles, paul,
   george, mary, jane, michael, eve, estelle, lola, giovanni, juergen, rafael, daan.
-  Pick one with `wocal connect --voice marius`.
 - Names you made up get misheard: Parakeet turned "woltspace" into "wolves base".
 - The server has no key. It only listens on this machine and refuses other hostnames.
 
